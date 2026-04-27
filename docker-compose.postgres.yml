@@ -1,0 +1,25 @@
+services:
+  hr-bot:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://hr_bot:hr_bot_password@postgres:5432/hr_bot
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: hr_bot
+      POSTGRES_USER: hr_bot
+      POSTGRES_PASSWORD: hr_bot_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hr_bot -d hr_bot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

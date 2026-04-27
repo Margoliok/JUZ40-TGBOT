@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Басты бет{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Бақылау панелі</h1>
+    <p>Қызметкерлер, хабарламалар және кері байланыс бойынша қысқа көрініс.</p>
+  </div>
+  <a class="primary-link" href="/broadcasts/new">Жаңа хабарлама</a>
+</section>
+
+<section class="stats">
+  <div><span>{{ stats.employees }}</span><p>Барлық қызметкер</p></div>
+  <div><span>{{ stats.active }}</span><p>Белсенді</p></div>
+  <div><span>{{ stats.broadcasts }}</span><p>Хабарлама</p></div>
+  <div><span>{{ stats.questions }}</span><p>Сұрақ</p></div>
+</section>
+
+<section class="grid two">
+  <div>
+    <div class="section-title">
+      <h2>Соңғы хабарламалар</h2>
+      <a href="/broadcasts">Барлығы</a>
+    </div>
+    <table>
+      <thead><tr><th>Атауы</th><th>Күні</th></tr></thead>
+      <tbody>
+        {% for item in broadcasts %}
+        <tr><td><a href="/broadcasts/{{ item.id }}">{{ item.title }}</a></td><td>{{ item.created_at.strftime("%d.%m.%Y %H:%M") }}</td></tr>
+        {% else %}
+        <tr><td colspan="2" class="muted">Әзірге хабарлама жоқ</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <div class="section-title">
+      <h2>Соңғы сұрақтар</h2>
+      <a href="/questions">Барлығы</a>
+    </div>
+    <table>
+      <thead><tr><th>Қызметкер</th><th>Хабарлама</th></tr></thead>
+      <tbody>
+        {% for item in questions %}
+        <tr><td>{{ item.employee.full_name }}</td><td>{{ item.broadcast.title }}</td></tr>
+        {% else %}
+        <tr><td colspan="2" class="muted">Сұрақ жоқ</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

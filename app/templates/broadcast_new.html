@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Жаңа хабарлама{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Жаңа хабарлама</h1>
+    <p>Алушыларды таңдаңыз және қызметкерлерге Telegram арқылы жіберіңіз. Суперюзер рассылкадан автоматты түрде исключается.</p>
+  </div>
+</section>
+
+{% if not bot_enabled %}
+<p class="alert">BOT_TOKEN орнатылмаған. Хабарлама базаға сақталады, бірақ Telegram арқылы жіберілмейді.</p>
+{% endif %}
+
+<form class="editor" method="post" action="/broadcasts">
+  <label>Тақырып
+    <input name="title" required placeholder="Мысалы: 1 мамыр демалыс күні">
+  </label>
+  <label>Мәтін
+    <textarea name="text" rows="7" required placeholder="Құрметті қызметкерлер, бұйрықпен танысып шығыңыз."></textarea>
+  </label>
+  <fieldset>
+    <legend>Алушылар</legend>
+    <label class="radio"><input type="radio" name="target_type" value="all" checked> Барлық белсенді қызметкер</label>
+    <label class="radio"><input type="radio" name="target_type" value="department"> Бөлім бойынша</label>
+    <select name="department">
+      <option value="">Бөлім таңдаңыз</option>
+      {% for value in departments %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+    </select>
+    <label class="radio"><input type="radio" name="target_type" value="position"> Лауазым бойынша</label>
+    <select name="position">
+      <option value="">Лауазым таңдаңыз</option>
+      {% for value in positions %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+    </select>
+    <label class="radio"><input type="radio" name="target_type" value="selected"> Таңдалған қызметкерлер</label>
+    <div class="employee-picker">
+      {% for employee in employees %}
+      <label><input type="checkbox" name="employee_ids" value="{{ employee.id }}"> {{ employee.full_name }} · {{ employee.department }}</label>
+      {% else %}
+      <p class="muted">Белсенді қызметкерлер жоқ</p>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <button type="submit">Жіберу</button>
+</form>
+{% endblock %}

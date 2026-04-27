@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Хабарламалар{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Хабарламалар</h1>
+    <p>Жіберілген бұйрықтар мен хабарландырулар тарихы.</p>
+  </div>
+  <a class="primary-link" href="/broadcasts/new">Жіберу</a>
+</section>
+
+<table>
+  <thead><tr><th>Атауы</th><th>Нысана</th><th>Құрылған уақыты</th><th>Жіберілген уақыты</th></tr></thead>
+  <tbody>
+    {% for item in broadcasts %}
+    <tr>
+      <td><a href="/broadcasts/{{ item.id }}">{{ item.title }}</a></td>
+      <td>{{ item.target_type }} {{ item.target_value or "" }}</td>
+      <td>{{ item.created_at.strftime("%d.%m.%Y %H:%M") }}</td>
+      <td>{{ item.sent_at.strftime("%d.%m.%Y %H:%M") if item.sent_at else "Күтуде" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="muted">Хабарлама жоқ</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

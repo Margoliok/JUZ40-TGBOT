@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Сұрақтар{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Қызметкерлер сұрақтары</h1>
+    <p>“Сұрағым бар” деп жауап берген қызметкерлердің хабарламалары.</p>
+  </div>
+</section>
+
+<div class="question-list">
+  {% for item in questions %}
+  <article class="question">
+    <div class="question-meta">
+      <strong>{{ item.employee.full_name }}</strong>
+      <span>{{ item.employee.department }} · {{ item.broadcast.title }}</span>
+      <time>{{ item.question_at.strftime("%d.%m.%Y %H:%M") if item.question_at else "" }}</time>
+    </div>
+    <p>{{ item.question_text }}</p>
+    {% if item.hr_answer %}
+    <p class="answer"><b>HR жауабы:</b> {{ item.hr_answer }}</p>
+    {% endif %}
+    <form method="post" action="/questions/{{ item.id }}/answer">
+      <textarea name="answer" rows="3" required placeholder="Жауап мәтіні">{{ item.hr_answer or "" }}</textarea>
+      <button type="submit">{{ "Қайта жіберу" if item.hr_answer else "Жауап беру" }}</button>
+    </form>
+  </article>
+  {% else %}
+  <p class="muted">Әзірге сұрақ жоқ</p>
+  {% endfor %}
+</div>
+{% endblock %}

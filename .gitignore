@@ -1,0 +1,12 @@
+.env
+.idea/
+.venv/
+__pycache__/
+*.py[cod]
+hr_bot.db
+data/
+server.*.log
+*.sqlite
+*.sqlite3
+.pytest_cache/
+.ruff_cache/

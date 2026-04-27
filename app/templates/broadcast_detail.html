@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Есеп{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ broadcast.title }}</h1>
+    <p>{{ broadcast.text }}</p>
+  </div>
+  <div class="actions">
+    <a class="secondary-link" href="/broadcasts/{{ broadcast.id }}/export.xlsx">Excel</a>
+    <a class="secondary-link" href="/broadcasts/{{ broadcast.id }}/export.pdf">PDF</a>
+    {% if bot_enabled %}
+    <form method="post" action="/broadcasts/{{ broadcast.id }}/send"><button type="submit">Қайта жіберу</button></form>
+    {% endif %}
+  </div>
+</section>
+
+<section class="stats compact">
+  <div><span>{{ stats.total }}</span><p>Алушы</p></div>
+  <div><span>{{ stats.sent }}</span><p>Жіберілді</p></div>
+  <div><span>{{ stats.acknowledged }}</span><p>Таныстым</p></div>
+  <div><span>{{ stats.agreed }}</span><p>Келістім</p></div>
+  <div><span>{{ stats.question }}</span><p>Сұрақ</p></div>
+  <div><span>{{ stats.unanswered }}</span><p>Жауап жоқ</p></div>
+</section>
+
+<table>
+  <thead>
+    <tr><th>Қызметкер</th><th>Бөлім</th><th>Жауап</th><th>Уақыты</th><th>Сұрақ</th><th>Статус</th></tr>
+  </thead>
+  <tbody>
+    {% for delivery in deliveries %}
+    <tr>
+      <td>{{ delivery.employee.full_name }}</td>
+      <td>{{ delivery.employee.department }}</td>
+      <td>{{ response_label(delivery.response) }}</td>
+      <td>{{ delivery.response_at.strftime("%d.%m.%Y %H:%M") if delivery.response_at else "" }}</td>
+      <td>{{ delivery.question_text or "" }}</td>
+      <td>{{ delivery.status.value }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">Алушы жоқ</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

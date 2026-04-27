@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}HR Bot{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">HR Telegram Bot</a>
+    <nav class="nav">
+      <a href="/employees">Қызметкерлер</a>
+      <a href="/broadcasts">Хабарламалар</a>
+      <a href="/broadcasts/new">Жіберу</a>
+      <a href="/questions">Сұрақтар</a>
+    </nav>
+    <form method="post" action="/logout">
+      <button class="ghost" type="submit">Шығу</button>
+    </form>
+  </header>
+  <main class="shell">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

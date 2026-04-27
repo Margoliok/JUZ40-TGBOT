@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Кіру</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body class="login-page">
+  <form class="login-box" method="post" action="/login">
+    <h1>HR панель</h1>
+    {% if error %}<p class="alert">{{ error }}</p>{% endif %}
+    <label>Логин
+      <input name="username" autocomplete="username" required>
+    </label>
+    <label>Пароль
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit">Кіру</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Сотрудники{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Сотрудники</h1>
+    <p>Список зарегистрированных сотрудников, фильтры и выдача админской роли для Telegram-панели.</p>
+  </div>
+</section>
+
+<form class="filters" method="get" action="/employees">
+  <input name="search" placeholder="ФИО, телефон, табельный номер" value="{{ filters.search }}">
+  <select name="department">
+    <option value="">Все отделы</option>
+    {% for value in departments %}
+    <option value="{{ value }}" {% if filters.department == value %}selected{% endif %}>{{ value }}</option>
+    {% endfor %}
+  </select>
+  <select name="position">
+    <option value="">Все должности</option>
+    {% for value in positions %}
+    <option value="{{ value }}" {% if filters.position == value %}selected{% endif %}>{{ value }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Фильтр</button>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>ФИО</th>
+      <th>Отдел</th>
+      <th>Должность</th>
+      <th>Телефон</th>
+      <th>Табель</th>
+      <th>Статус</th>
+      <th>Роль</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for employee in employees %}
+    <tr>
+      <td>{{ employee.id }}</td>
+      <td>{{ employee.full_name }}</td>
+      <td>{{ employee.department }}</td>
+      <td>{{ employee.position }}</td>
+      <td>{{ employee.phone or "" }}</td>
+      <td>{{ employee.employee_no or "" }}</td>
+      <td><span class="badge {{ 'ok' if employee.is_active else 'off' }}">{{ "Активен" if employee.is_active else "Неактивен" }}</span></td>
+      <td><span class="badge {{ 'ok' if employee.is_admin else 'off' }}">{{ "Суперюзер" if employee.is_superuser else ("Админ" if employee.is_admin else "Сотрудник") }}</span></td>
+      <td class="row-actions">
+        <form method="post" action="/employees/{{ employee.id }}/toggle">
+          <button class="small" type="submit">{{ "Отключить" if employee.is_active else "Включить" }}</button>
+        </form>
+        {% if not employee.is_superuser %}
+          <form method="post" action="/employees/{{ employee.id }}/toggle-admin">
+            <button class="small" type="submit">{{ "Снять админа" if employee.is_admin else "Сделать админом" }}</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" class="muted">Сотрудники не найдены</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
