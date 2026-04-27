@@ -36,8 +36,8 @@ from app.services import (
     save_hr_answer,
     save_question,
     send_broadcast,
-    toggle_employee_admin,
     set_delivery_response,
+    toggle_employee_admin,
 )
 
 
@@ -85,35 +85,33 @@ def admin_menu_keyboard(is_superuser: bool = False) -> InlineKeyboardMarkup:
     rows = [
         [
             InlineKeyboardButton(text="Статистика", callback_data="admin:stats"),
-            InlineKeyboardButton(text="Сотрудники", callback_data="admin:employees"),
+            InlineKeyboardButton(text="Қызметкерлер", callback_data="admin:employees"),
         ],
         [
-            InlineKeyboardButton(text="Рассылка", callback_data="admin:broadcast"),
-            InlineKeyboardButton(text="Вопросы", callback_data="admin:questions"),
+            InlineKeyboardButton(text="Хабарлама жіберу", callback_data="admin:broadcast"),
+            InlineKeyboardButton(text="Сұрақтар", callback_data="admin:questions"),
         ],
     ]
     if is_superuser:
-        rows.append([InlineKeyboardButton(text="Роли админов", callback_data="admin:roles")])
-    return InlineKeyboardMarkup(
-        inline_keyboard=rows
-    )
+        rows.append([InlineKeyboardButton(text="Админ рөлдері", callback_data="admin:roles")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def target_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Всем активным", callback_data="admin:btarget:all")],
-            [InlineKeyboardButton(text="По отделу", callback_data="admin:btarget:department")],
-            [InlineKeyboardButton(text="По должности", callback_data="admin:btarget:position")],
-            [InlineKeyboardButton(text="Выбранным ID", callback_data="admin:btarget:selected")],
-            [InlineKeyboardButton(text="Отмена", callback_data="admin:menu")],
+            [InlineKeyboardButton(text="Барлық белсенді қызметкерге", callback_data="admin:btarget:all")],
+            [InlineKeyboardButton(text="Бөлім бойынша", callback_data="admin:btarget:department")],
+            [InlineKeyboardButton(text="Лауазым бойынша", callback_data="admin:btarget:position")],
+            [InlineKeyboardButton(text="Таңдалған ID бойынша", callback_data="admin:btarget:selected")],
+            [InlineKeyboardButton(text="Бас тарту", callback_data="admin:menu")],
         ]
     )
 
 
 def back_to_admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="Назад в админку", callback_data="admin:menu")]]
+        inline_keyboard=[[InlineKeyboardButton(text="Админ панельге қайту", callback_data="admin:menu")]]
     )
 
 
@@ -135,21 +133,21 @@ async def is_superuser(telegram_id: int) -> bool:
 async def deny_callback(callback: CallbackQuery) -> bool:
     if await is_admin(callback.from_user.id):
         return False
-    await callback.answer("Нет доступа. Админскую роль нужно выдать в веб-панели.", show_alert=True)
+    await callback.answer("Қолжетімділік жоқ. Админ рөлін HR немесе суперюзер беруі керек.", show_alert=True)
     return True
 
 
 async def deny_superuser_callback(callback: CallbackQuery) -> bool:
     if await is_superuser(callback.from_user.id):
         return False
-    await callback.answer("Это действие доступно только суперпользователю.", show_alert=True)
+    await callback.answer("Бұл әрекет тек суперюзерге қолжетімді.", show_alert=True)
     return True
 
 
 async def deny_message(message: Message) -> bool:
     if await is_admin(message.from_user.id):
         return False
-    await message.answer("Нет доступа. Сначала HR должен выдать вам роль админа в веб-панели.")
+    await message.answer("Қолжетімділік жоқ. Админ рөлін HR немесе суперюзер беруі керек.")
     return True
 
 
@@ -158,30 +156,28 @@ async def start(message: Message, state: FSMContext) -> None:
     async with SessionLocal() as session:
         employee = await get_employee_by_telegram_id(session, message.from_user.id)
     if employee and employee.is_active:
-        admin_hint = "\n\nУ вас есть админская роль. Откройте панель командой /admin." if employee.is_admin else ""
-        await message.answer(
-            f"Сәлеметсіз бе, {employee.full_name}! Вы уже зарегистрированы.{admin_hint}"
-        )
+        admin_hint = "\n\nСізде админ рөлі бар. Панельді ашу үшін /admin командасын жазыңыз." if employee.is_admin else ""
+        await message.answer(f"Сәлеметсіз бе, {employee.full_name}! Сіз тіркелгенсіз.{admin_hint}")
         return
     if employee and not employee.is_active:
-        await message.answer("Ваш аккаунт временно отключен. Обратитесь в HR.")
+        await message.answer("Сіздің аккаунтыңыз уақытша белсенді емес. HR бөліміне хабарласыңыз.")
         return
     await state.set_state(Registration.full_name)
-    await message.answer("Сәлеметсіз бе! Для регистрации напишите ваше ФИО полностью.")
+    await message.answer("Сәлеметсіз бе! Тіркелу үшін аты-жөніңізді толық жазыңыз.")
 
 
 @router.message(Registration.full_name)
 async def reg_full_name(message: Message, state: FSMContext) -> None:
     await state.update_data(full_name=message.text.strip())
     await state.set_state(Registration.department)
-    await message.answer("Напишите ваш отдел. Например: IT, HR, Бухгалтерия.")
+    await message.answer("Бөліміңізді жазыңыз. Мысалы: IT, HR, Бухгалтерия.")
 
 
 @router.message(Registration.department)
 async def reg_department(message: Message, state: FSMContext) -> None:
     await state.update_data(department=message.text.strip())
     await state.set_state(Registration.position)
-    await message.answer("Напишите вашу должность.")
+    await message.answer("Лауазымыңызды жазыңыз.")
 
 
 @router.message(Registration.position)
@@ -189,11 +185,11 @@ async def reg_position(message: Message, state: FSMContext) -> None:
     await state.update_data(position=message.text.strip())
     await state.set_state(Registration.phone)
     keyboard = ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="Отправить телефон", request_contact=True)]],
+        keyboard=[[KeyboardButton(text="Телефон нөмірін жіберу", request_contact=True)]],
         resize_keyboard=True,
         one_time_keyboard=True,
     )
-    await message.answer("Напишите телефон или отправьте его кнопкой.", reply_markup=keyboard)
+    await message.answer("Телефон нөміріңізді жазыңыз немесе батырма арқылы жіберіңіз.", reply_markup=keyboard)
 
 
 @router.message(Registration.phone)
@@ -201,7 +197,7 @@ async def reg_phone(message: Message, state: FSMContext) -> None:
     phone = message.contact.phone_number if message.contact else (message.text or "").strip()
     await state.update_data(phone=phone)
     await state.set_state(Registration.employee_no)
-    await message.answer("Напишите табельный номер. Если его нет, отправьте '-'.", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Табельдік нөміріңізді жазыңыз. Егер жоқ болса, '-' деп жіберіңіз.", reply_markup=ReplyKeyboardRemove())
 
 
 @router.message(Registration.employee_no)
@@ -221,7 +217,7 @@ async def reg_employee_no(message: Message, state: FSMContext) -> None:
             employee_no=employee_no,
         )
     await state.clear()
-    await message.answer(f"Регистрация завершена, {employee.full_name}. Теперь вы будете получать HR-сообщения.")
+    await message.answer(f"Тіркеу аяқталды, {employee.full_name}. Енді HR хабарламаларын ала аласыз.")
 
 
 @router.message(Command("admin"))
@@ -229,9 +225,9 @@ async def admin_command(message: Message, state: FSMContext) -> None:
     await state.clear()
     admin = await current_admin(message.from_user.id)
     if not admin:
-        await message.answer("Нет доступа. Сначала HR должен выдать вам роль админа в веб-панели.")
+        await message.answer("Қолжетімділік жоқ. Админ рөлін HR немесе суперюзер беруі керек.")
         return
-    title = "Суперюзер-панель Telegram" if admin.is_superuser else "Админ-панель Telegram"
+    title = "Telegram суперюзер панелі" if admin.is_superuser else "Telegram админ панелі"
     await message.answer(title, reply_markup=admin_menu_keyboard(admin.is_superuser))
 
 
@@ -257,7 +253,7 @@ async def clear_chat(message: Message, state: FSMContext, bot: Bot) -> None:
         if deleted and deleted % 25 == 0:
             await asyncio.sleep(0.2)
 
-    notice = await message.answer(f"Удалено сообщений: {deleted}.")
+    notice = await message.answer(f"Өшірілген хабарламалар саны: {deleted}.")
     await asyncio.sleep(3)
     try:
         await bot.delete_message(message.chat.id, notice.message_id)
@@ -269,10 +265,10 @@ async def clear_chat(message: Message, state: FSMContext, bot: Bot) -> None:
 async def admin_menu(callback: CallbackQuery, state: FSMContext) -> None:
     admin = await current_admin(callback.from_user.id)
     if not admin:
-        await callback.answer("Нет доступа. Админскую роль нужно выдать в веб-панели.", show_alert=True)
+        await callback.answer("Қолжетімділік жоқ. Админ рөлін HR немесе суперюзер беруі керек.", show_alert=True)
         return
     await state.clear()
-    title = "Суперюзер-панель Telegram" if admin.is_superuser else "Админ-панель Telegram"
+    title = "Telegram суперюзер панелі" if admin.is_superuser else "Telegram админ панелі"
     await callback.message.answer(title, reply_markup=admin_menu_keyboard(admin.is_superuser))
     await callback.answer()
 
@@ -287,10 +283,10 @@ async def admin_stats(callback: CallbackQuery) -> None:
         "\n".join(
             [
                 "<b>Статистика</b>",
-                f"Сотрудников: {stats['employees']}",
-                f"Активных: {stats['active']}",
-                f"Рассылок: {stats['broadcasts']}",
-                f"Вопросов: {stats['questions']}",
+                f"Қызметкерлер саны: {stats['employees']}",
+                f"Белсенді қызметкерлер: {stats['active']}",
+                f"Хабарламалар саны: {stats['broadcasts']}",
+                f"Сұрақтар саны: {stats['questions']}",
             ]
         ),
         reply_markup=back_to_admin_keyboard(),
@@ -304,15 +300,15 @@ async def admin_employees(callback: CallbackQuery) -> None:
         return
     async with SessionLocal() as session:
         employees = await list_employees(session)
-    lines = ["<b>Сотрудники</b>", "ID нужен для рассылки выбранным сотрудникам.", ""]
+    lines = ["<b>Қызметкерлер</b>", "Таңдалған қызметкерлерге жіберу үшін ID қажет.", ""]
     for employee in employees[:30]:
-        role = " admin" if employee.is_admin else ""
-        active = "active" if employee.is_active else "off"
+        role = " · суперюзер" if employee.is_superuser else (" · админ" if employee.is_admin else "")
+        active = "белсенді" if employee.is_active else "өшірулі"
         lines.append(f"#{employee.id} · {employee.full_name} · {employee.department} · {active}{role}")
     if len(employees) > 30:
-        lines.append(f"\nПоказаны первые 30 из {len(employees)}.")
+        lines.append(f"\nАлғашқы 30 қызметкер көрсетілді. Барлығы: {len(employees)}.")
     if not employees:
-        lines.append("Сотрудников пока нет.")
+        lines.append("Әзірге қызметкерлер жоқ.")
     await callback.message.answer("\n".join(lines), reply_markup=back_to_admin_keyboard())
     await callback.answer()
 
@@ -325,34 +321,34 @@ async def admin_roles(callback: CallbackQuery) -> None:
         employees = await list_employees(session)
 
     if not employees:
-        await callback.message.answer("Сотрудников пока нет.", reply_markup=back_to_admin_keyboard())
+        await callback.message.answer("Әзірге қызметкерлер жоқ.", reply_markup=back_to_admin_keyboard())
         await callback.answer()
         return
 
     lines = [
-        "<b>Управление ролями</b>",
-        "Только суперпользователь может выдавать и снимать роль админа.",
+        "<b>Рөлдерді басқару</b>",
+        "Админ рөлін тек суперюзер бере алады немесе алып тастай алады.",
         "",
     ]
     buttons = []
     for employee in employees[:20]:
         if employee.is_superuser:
-            role = "superuser"
+            role = "суперюзер"
             button_text = f"Суперюзер #{employee.id}"
             callback_data = "admin:roles"
         elif employee.is_admin:
-            role = "admin"
-            button_text = f"Снять админа #{employee.id}"
+            role = "админ"
+            button_text = f"Админді алып тастау #{employee.id}"
             callback_data = f"admin:role-toggle:{employee.id}"
         else:
-            role = "employee"
-            button_text = f"Сделать админом #{employee.id}"
+            role = "қызметкер"
+            button_text = f"Админ ету #{employee.id}"
             callback_data = f"admin:role-toggle:{employee.id}"
         lines.append(f"#{employee.id} · {employee.full_name} · {employee.department} · {role}")
         buttons.append([InlineKeyboardButton(text=button_text, callback_data=callback_data)])
     if len(employees) > 20:
-        lines.append(f"\nПоказаны первые 20 из {len(employees)}.")
-    buttons.append([InlineKeyboardButton(text="Назад в админку", callback_data="admin:menu")])
+        lines.append(f"\nАлғашқы 20 қызметкер көрсетілді. Барлығы: {len(employees)}.")
+    buttons.append([InlineKeyboardButton(text="Админ панельге қайту", callback_data="admin:menu")])
     await callback.message.answer("\n".join(lines), reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
     await callback.answer()
 
@@ -365,13 +361,13 @@ async def admin_role_toggle(callback: CallbackQuery) -> None:
     async with SessionLocal() as session:
         employee = await toggle_employee_admin(session, employee_id)
     if not employee:
-        await callback.answer("Сотрудник не найден.", show_alert=True)
+        await callback.answer("Қызметкер табылмады.", show_alert=True)
         return
     if employee.is_superuser:
-        await callback.answer("Роль суперпользователя задается только через .env.", show_alert=True)
+        await callback.answer("Суперюзер рөлі тек .env арқылы беріледі.", show_alert=True)
         return
-    role = "админ" if employee.is_admin else "сотрудник"
-    await callback.message.answer(f"Роль обновлена: #{employee.id} {employee.full_name} теперь {role}.")
+    role = "админ" if employee.is_admin else "қызметкер"
+    await callback.message.answer(f"Рөл жаңартылды: #{employee.id} {employee.full_name} енді {role}.")
     await admin_roles(callback)
 
 
@@ -380,7 +376,7 @@ async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext) -> N
     if await deny_callback(callback):
         return
     await state.set_state(AdminBroadcast.title)
-    await callback.message.answer("Введите заголовок рассылки.")
+    await callback.message.answer("Хабарлама тақырыбын енгізіңіз.")
     await callback.answer()
 
 
@@ -390,7 +386,7 @@ async def admin_broadcast_title(message: Message, state: FSMContext) -> None:
         return
     await state.update_data(title=message.text.strip())
     await state.set_state(AdminBroadcast.text)
-    await message.answer("Введите текст рассылки.")
+    await message.answer("Хабарлама мәтінін енгізіңіз.")
 
 
 @router.message(AdminBroadcast.text)
@@ -398,7 +394,7 @@ async def admin_broadcast_text(message: Message, state: FSMContext) -> None:
     if await deny_message(message):
         return
     await state.update_data(text=message.text.strip())
-    await message.answer("Выберите получателей. Вам самому и суперюзеру рассылка не отправится.", reply_markup=target_keyboard())
+    await message.answer("Алушыларды таңдаңыз. Хабарлама өзіңізге және суперюзерге жіберілмейді.", reply_markup=target_keyboard())
 
 
 @router.callback_query(F.data.startswith("admin:btarget:"))
@@ -415,19 +411,19 @@ async def admin_broadcast_target(callback: CallbackQuery, state: FSMContext, bot
         if target_type == "department":
             values = await distinct_values(session, "department")
             await state.set_state(AdminBroadcast.department)
-            await callback.message.answer("Введите отдел.\n\nДоступные: " + (", ".join(values) if values else "пока нет"))
+            await callback.message.answer("Бөлім атауын енгізіңіз.\n\nҚолжетімді бөлімдер: " + (", ".join(values) if values else "әзірге жоқ"))
         elif target_type == "position":
             values = await distinct_values(session, "position")
             await state.set_state(AdminBroadcast.position)
-            await callback.message.answer("Введите должность.\n\nДоступные: " + (", ".join(values) if values else "пока нет"))
+            await callback.message.answer("Лауазым атауын енгізіңіз.\n\nҚолжетімді лауазымдар: " + (", ".join(values) if values else "әзірге жоқ"))
         elif target_type == "selected":
             employees = await list_employees(session, active_only=True)
             await state.set_state(AdminBroadcast.selected)
-            lines = ["Введите ID сотрудников через запятую.", ""]
+            lines = ["Қызметкер ID-лерін үтір арқылы енгізіңіз.", ""]
             for employee in employees[:30]:
                 lines.append(f"#{employee.id} · {employee.full_name} · {employee.department}")
             if len(employees) > 30:
-                lines.append(f"\nПоказаны первые 30 из {len(employees)}.")
+                lines.append(f"\nАлғашқы 30 қызметкер көрсетілді. Барлығы: {len(employees)}.")
             await callback.message.answer("\n".join(lines))
     await callback.answer()
 
@@ -494,11 +490,11 @@ async def finish_admin_broadcast(
     await message.answer(
         "\n".join(
             [
-                "<b>Рассылка создана</b>",
+                "<b>Хабарлама жасалды</b>",
                 f"ID: {broadcast.id}",
-                f"Получателей: {stats['total']}",
-                f"Отправлено: {stats['sent']}",
-                f"Ошибок: {stats['failed']}",
+                f"Алушылар саны: {stats['total']}",
+                f"Жіберілді: {stats['sent']}",
+                f"Қате саны: {stats['failed']}",
             ]
         ),
         reply_markup=back_to_admin_keyboard(),
@@ -512,20 +508,20 @@ async def admin_questions(callback: CallbackQuery) -> None:
     async with SessionLocal() as session:
         questions = await list_questions(session)
     if not questions:
-        await callback.message.answer("Вопросов пока нет.", reply_markup=back_to_admin_keyboard())
+        await callback.message.answer("Әзірге сұрақ жоқ.", reply_markup=back_to_admin_keyboard())
         await callback.answer()
         return
 
-    lines = ["<b>Вопросы сотрудников</b>"]
+    lines = ["<b>Қызметкерлер сұрақтары</b>"]
     buttons = []
     for item in questions[:10]:
-        answer_mark = "ответ есть" if item.hr_answer else "без ответа"
+        answer_mark = "жауап берілген" if item.hr_answer else "жауап жоқ"
         question = (item.question_text or "").replace("\n", " ")
         if len(question) > 80:
             question = question[:77] + "..."
         lines.append(f"\n#{item.id} · {item.employee.full_name} · {answer_mark}\n{question}")
-        buttons.append([InlineKeyboardButton(text=f"Ответить #{item.id}", callback_data=f"admin:qanswer:{item.id}")])
-    buttons.append([InlineKeyboardButton(text="Назад в админку", callback_data="admin:menu")])
+        buttons.append([InlineKeyboardButton(text=f"Жауап беру #{item.id}", callback_data=f"admin:qanswer:{item.id}")])
+    buttons.append([InlineKeyboardButton(text="Админ панельге қайту", callback_data="admin:menu")])
     await callback.message.answer("\n".join(lines), reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
     await callback.answer()
 
@@ -537,7 +533,7 @@ async def admin_answer_start(callback: CallbackQuery, state: FSMContext) -> None
     delivery_id = int(callback.data.rsplit(":", maxsplit=1)[-1])
     await state.set_state(AdminAnswer.answer)
     await state.update_data(delivery_id=delivery_id)
-    await callback.message.answer(f"Введите ответ на вопрос #{delivery_id}.")
+    await callback.message.answer(f"#{delivery_id} сұрағына жауап мәтінін енгізіңіз.")
     await callback.answer()
 
 
@@ -551,13 +547,13 @@ async def admin_answer_save(message: Message, state: FSMContext, bot: Bot) -> No
     async with SessionLocal() as session:
         delivery = await save_hr_answer(session, delivery_id, message.text.strip())
     if not delivery:
-        await message.answer("Вопрос не найден.", reply_markup=back_to_admin_keyboard())
+        await message.answer("Сұрақ табылмады.", reply_markup=back_to_admin_keyboard())
         return
     await bot.send_message(
         delivery.employee.telegram_id,
         f"<b>HR жауабы</b>\n\n{escape(message.text.strip())}\n\nХабарлама: {escape(delivery.broadcast.title)}",
     )
-    await message.answer("Ответ сохранен и отправлен сотруднику.", reply_markup=back_to_admin_keyboard())
+    await message.answer("Жауап сақталды және қызметкерге жіберілді.", reply_markup=back_to_admin_keyboard())
 
 
 @router.callback_query(F.data.startswith("resp:"))
@@ -568,15 +564,15 @@ async def handle_response(callback: CallbackQuery, state: FSMContext) -> None:
     async with SessionLocal() as session:
         delivery = await set_delivery_response(session, delivery_id, callback.from_user.id, response)
     if not delivery:
-        await callback.answer("Это сообщение не относится к вашему аккаунту.", show_alert=True)
+        await callback.answer("Бұл хабарлама сіздің аккаунтыңызға тиесілі емес.", show_alert=True)
         return
     if response == ResponseType.QUESTION:
         await state.set_state(Feedback.question)
         await state.update_data(delivery_id=delivery_id)
-        await callback.message.answer("Напишите ваш вопрос в этот чат.")
+        await callback.message.answer("Сұрағыңызды осы чатқа жазыңыз.")
         await callback.answer()
         return
-    text = "Ответ сохранен: Таныстым" if response == ResponseType.ACKNOWLEDGED else "Ответ сохранен: Келістім"
+    text = "Жауабыңыз сақталды: Таныстым" if response == ResponseType.ACKNOWLEDGED else "Жауабыңыз сақталды: Келістім"
     await callback.answer(text)
     await callback.message.answer(text)
 
@@ -589,9 +585,9 @@ async def feedback_question(message: Message, state: FSMContext) -> None:
         saved = await save_question(session, delivery_id, message.from_user.id, message.text.strip())
     await state.clear()
     if saved:
-        await message.answer("Ваш вопрос отправлен HR. Ответ придет в этот чат.")
+        await message.answer("Сұрағыңыз HR бөліміне жіберілді. Жауап осы чатқа келеді.")
     else:
-        await message.answer("Не удалось сохранить вопрос. Обратитесь в HR.")
+        await message.answer("Сұрақты сақтау мүмкін болмады. HR бөліміне хабарласыңыз.")
 
 
 @router.message()
@@ -599,9 +595,9 @@ async def fallback(message: Message) -> None:
     async with SessionLocal() as session:
         employee = await get_employee_by_telegram_id(session, message.from_user.id)
     if not employee:
-        await message.answer("Для регистрации нажмите /start.")
+        await message.answer("Тіркелу үшін /start командасын басыңыз.")
         return
     if employee.is_admin:
-        await message.answer("Для админ-панели используйте /admin. Для ответов на рассылки используйте кнопки под сообщениями.")
+        await message.answer("Админ панель үшін /admin командасын пайдаланыңыз. HR хабарламаларына жауап беру үшін хабарлама астындағы батырмаларды басыңыз.")
         return
-    await message.answer("Для ответов на HR-сообщения используйте кнопки под сообщениями.")
+    await message.answer("HR хабарламаларына жауап беру үшін хабарлама астындағы батырмаларды басыңыз.")
